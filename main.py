@@ -4,10 +4,13 @@ import numpy as np
 
 
 start_time = time.time()
-test = MicroCT("p324.nii.gz")
+test = Mouse("P324", "../p324_mri.nii.gz", "../p324_uCT.nii.gz", "../p324_seg.nii.gz")
 print(test)
-print("Loaded in --- %s seconds ---" % (time.time() - start_time))
+print("Loaded in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
 
 start_time = time.time()
-print(np.max(test.data), np.min(test.data), sep=", ")
-print("Loaded in --- %s seconds ---" % (time.time() - start_time))
+print(test.voxel_size)
+print("Loaded in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
+
+test.plot_segmentations_overlay(slice_offset=50)
+test.plot_multimodal_midplanes(slice_offset=50)

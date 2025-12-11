@@ -12,6 +12,13 @@ class Properties:
     # 1. Section: Properties
     # ================================================================
     @property
+    def folder(self):
+        folder_name = os.path.dirname(self.path)
+        if folder_name == '': folder_name = '.'
+        
+        return folder_name
+
+    @property
     def path(self): return self._path
 
     @property
@@ -25,13 +32,6 @@ class Properties:
 
     @property
     def shape(self): return self.data.shape
-
-    @property
-    def folder(self):
-        folder_name = os.path.dirname(self.path)
-        if folder_name == '': folder_name = '.'
-        
-        return folder_name
 
 
 

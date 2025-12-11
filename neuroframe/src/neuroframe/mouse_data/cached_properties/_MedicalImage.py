@@ -2,6 +2,7 @@
 # 0. Section: Impports
 # ================================================================
 import nibabel as nib
+import os
 
 from functools import cached_property
 
