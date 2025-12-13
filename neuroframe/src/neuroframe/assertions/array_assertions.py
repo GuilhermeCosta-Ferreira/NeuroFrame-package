@@ -3,17 +3,13 @@
 # ================================================================
 import numpy as np
 
-from .MedicalImage import MedicalImage
-from ..utils import normalize
-
-from .dunders._Segmentation import Dunders
-from .properties._Segmentation import Properties
+from ..logger import logger
 
 
 
 # ================================================================
-# 1. Section: MRI Class
+# 1. Section: Shapes
 # ================================================================
-class Segmentation(Dunders, Properties, MedicalImage):
-    def __init__(self, path):
-        super().__init__(path)
+def assert_same_shape(array1: np.ndarray, array2: np.ndarray) -> None:
+    if array1.shape != array2.shape:
+        logger.warning(f"Array shapes are not the same: {array1.shape} vs {array2.shape}")

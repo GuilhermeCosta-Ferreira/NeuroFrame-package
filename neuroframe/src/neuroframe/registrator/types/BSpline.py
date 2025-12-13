@@ -1,0 +1,2 @@
+class BSpline:
+    pass

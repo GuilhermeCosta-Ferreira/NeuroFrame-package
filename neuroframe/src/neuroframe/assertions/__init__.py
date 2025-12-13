@@ -1,0 +1,1 @@
+from .array_assertions import assert_same_shape

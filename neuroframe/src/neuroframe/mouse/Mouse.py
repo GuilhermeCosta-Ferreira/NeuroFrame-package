@@ -10,6 +10,7 @@ from ._plots import Plots
 from ._assertions import assert_required_files, assert_no_extra_files
 
 
+
 # ================================================================
 # 1. Section: Mouse Classes
 # ================================================================

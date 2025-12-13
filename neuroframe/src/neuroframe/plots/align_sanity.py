@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from ..styling import alpha_red_cmap_256, alpha_blue_cmap_256
+from ..assertions import assert_same_shape
 
 
 
@@ -63,6 +64,9 @@ def plot_mouse_template_overlay(mouse_volume: np.ndarray, template_volume: np.nd
     >>> plt.close() # Close the plot to prevent it from blocking execution
     """
     
+    # Warns the debugger in case of shape mismatch
+    assert_same_shape(mouse_volume, template_volume)
+
     # Unpacks the data for the loop, more consise this way
     cx, cy, cz = (s // 2 for s in template_volume.shape)
     slices = [(cx, slice(None), slice(None))] * 3 + [(slice(None), cy, slice(None))] * 3 + [(slice(None), slice(None), cz)] * 3
