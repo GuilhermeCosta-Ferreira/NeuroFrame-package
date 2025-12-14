@@ -77,8 +77,8 @@ def cumsum_projection(micro_ct: np.ndarray, parameters: tuple, lower_bound: None
 # ──────────────────────────────────────────────────────
 # 1.2 Subsection: Mean Projection Method
 # ──────────────────────────────────────────────────────
-# BUG: For some reason it plots empty array, even though the array seems to 
-# be populated, since we don't use this method, for now is ok 
+# BUG: For some reason it plots empty array, even though the array seems
+# to be populated, since we don't use this method, for now is ok 
 def mean_projection(micro_ct: np.ndarray) -> np.ndarray:
     z_len = micro_ct.shape[0]
     lower_bound = 3*int(z_len//4)
