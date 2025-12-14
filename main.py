@@ -10,5 +10,20 @@ start_time = time.time()
 template_vol = adapt_template(mouse, ALLEN_TEMPLATE)
 align_to_allen(mouse)
 print("Adapted in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
-
 plot_mouse_template_overlay(template_vol, mouse.segmentation.volume)
+
+start_time = time.time()
+skull = extract_skull(mouse, method='mean')
+print("Adapted in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
+plot_skull(skull)
+
+start_time = time.time()
+skull = extract_skull(mouse, method='cumsum')
+print("Adapted in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
+plot_skull(skull)
+
+
+start_time = time.time()
+skull, depth_map = extract_skull(mouse, method='view')
+print("Adapted in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
+plot_skull(skull, depth_map)
