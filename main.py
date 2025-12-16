@@ -1,29 +1,17 @@
-from neuroframe.src.neuroframe import *
+from neuroframe import *
 import time
 
-
-start_time = time.time()
 mouse = Mouse.from_folder('P874', 'tests/integration/fixtures/test_experiment/test_mouse_p874')
-print("Loaded in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
 
-start_time = time.time()
 template_vol = adapt_template(mouse, ALLEN_TEMPLATE)
 align_to_allen(mouse)
-print("Adapted in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
+
 plot_mouse_template_overlay(template_vol, mouse.segmentation.volume)
 
-start_time = time.time()
-skull = extract_skull(mouse, method='mean')
-print("Adapted in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
+skull = extract_skull(mouse)
+
 plot_skull(skull)
 
-start_time = time.time()
-skull = extract_skull(mouse, method='cumsum')
-print("Adapted in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
-plot_skull(skull)
+bregma, lambda_ = get_bregma_lambda(mouse, skull)
 
-
-start_time = time.time()
-skull, depth_map = extract_skull(mouse, method='view')
-print("Adapted in --- %s seconds ---" % (time.time() - start_time), end="\n\n")
-plot_skull(skull, depth_map)
+inspect_bl(skull, bregma, lambda_)
