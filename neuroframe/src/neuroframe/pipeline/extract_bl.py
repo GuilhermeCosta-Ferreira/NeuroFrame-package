@@ -5,7 +5,6 @@ import cv2
 
 import numpy as np
 import SimpleITK as sitk
-import matplotlib.pyplot as plt
 
 from ..utils import get_z_coord
 from ..logger import logger
@@ -26,7 +25,74 @@ REF_TEMPLATES = (BREGMA_TEMPLATE, LAMBDA_TEMPLATE)
 # ================================================================
 # 1. Section: Extract Bregma and Lambda Points
 # ================================================================
-def get_bregma_lambda(mouse: Mouse, skull_surface: np.ndarray):
+def get_bregma_lambda(mouse: Mouse, skull_surface: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Computes the 3D coordinates of bregma and lambda on a mouse skull.
+    
+    This function identifies the bregma and lambda landmarks by applying a
+    template matching approach. It first computes a deformation map from the
+    provided skull surface. Then, it aligns reference templates for bregma and
+    lambda to a specific slice of the mouse's segmentation data. Using these
+    aligned templates and the deformation map, it finds the 2D (y, x) coordinates
+    of the landmarks on the skull surface. Finally, it determines the corresponding
+    z-coordinate from the micro-CT data to produce the full 3D coordinates.
+    
+    Parameters
+    ----------
+    mouse : Mouse
+        A custom object containing mouse-specific data, including segmentation
+        volumes (`mouse.segmentation.volume`) and micro-CT data
+        (`mouse.micro_ct.data`).
+    skull_surface : np.ndarray
+        A NumPy array representing the skull surface, used to derive the
+        deformation map and locate the landmarks.
+
+    Returns
+    -------
+    tuple[tuple[int, int, int], tuple[int, int, int]]
+        A tuple containing two elements:
+        - The 3D coordinates of bregma as a tuple (z, y, x).
+        - The 3D coordinates of lambda as a tuple (z, y, x).
+
+    Side Effects
+    ------------
+    Logs the following information using the configured `logger`:
+    - The calculated 3D coordinates for bregma and lambda.
+    - The deviation of bregma and lambda from a reference, in millimeters.
+    - The angle of deviation, in degrees.
+
+    Notes
+    -----
+    - The function relies on a global constant `REF_TEMPLATES` which must be
+      defined and contain the bregma and lambda templates.
+    - It assumes the `mouse` object has `segmentation.volume` and
+      `micro_ct.data` attributes.
+    - A hardcoded slice index `100` from `mouse.segmentation.volume` is used
+      as the reference slide for template alignment. This may not be
+      appropriate for all datasets.
+    - The returned coordinates are in the (z, y, x) order.
+    - The accuracy of the results depends on the quality of the input data
+      and the correctness of the helper functions (`extract_deformation_map`,
+      `get_reference_point`, `get_z_coord`, `compute_deviation`).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from unittest.mock import MagicMock
+    >>> # This is a conceptual example, as 'Mouse' and helper functions
+    >>> # are specific to the NeuroFrame package.
+    >>> # Mock the Mouse object and its attributes
+    >>> mock_mouse = MagicMock()
+    >>> mock_mouse.segmentation.volume = np.zeros((200, 512, 512))
+    >>> mock_mouse.micro_ct.data = np.zeros((200, 512, 512))
+    >>> # Mock a skull surface
+    >>> mock_skull_surface = np.random.rand(512, 512)
+    >>> # In a real scenario, you would call the function like this:
+    >>> # bregma_coords, lambda_coords = get_bregma_lambda(mock_mouse, mock_skull_surface)
+    >>> # The function would then log and return the coordinates, e.g.:
+    >>> # bregma_coords = (110, 250, 260)
+    >>> # lambda_coords = (105, 400, 255)
+    """
+    
     transform = extract_deformation_map(skull_surface)
 
     # Unpacks the templates
@@ -63,7 +129,7 @@ def get_bregma_lambda(mouse: Mouse, skull_surface: np.ndarray):
 # ──────────────────────────────────────────────────────
 # 1.1 Subsection: Deformation Map Extraction
 # ──────────────────────────────────────────────────────
-def extract_deformation_map(skull_surface: np.ndarray, sutures_registration: None | Registrator = None):
+def extract_deformation_map(skull_surface: np.ndarray, sutures_registration: None | Registrator = None) -> sitk.Transform:
     # Initilize the sutures registrator if not provided
     if sutures_registration is None: sutures_registration = SUTURE_REGISTRATOR
         
@@ -78,7 +144,7 @@ def extract_deformation_map(skull_surface: np.ndarray, sutures_registration: Non
 # ──────────────────────────────────────────────────────
 # 1.2 Subsection: Apply Deformation Map to Reference Templates
 # ──────────────────────────────────────────────────────
-def get_reference_point(reference_template: np.ndarray | sitk.Image, skull_surface: np.ndarray | sitk.Image, transform: sitk.Transform):
+def get_reference_point(reference_template: np.ndarray | sitk.Image, skull_surface: np.ndarray | sitk.Image, transform: sitk.Transform) -> np.ndarray:
     # Apply the same transformation to the reference template that was used to get the template
     resampler = Registrator(res_interpolator = 'nearest')
     deformed_template = resampler.resample(convert_input(skull_surface), convert_input(reference_template), transform)
@@ -91,22 +157,29 @@ def get_reference_point(reference_template: np.ndarray | sitk.Image, skull_surfa
     return reference_coords
 
 
-def compute_deviation(mouse: Mouse, coords: tuple):
+# ──────────────────────────────────────────────────────
+# 1.3 Subsection: Get Deviations and Angle
+# ──────────────────────────────────────────────────────
+def compute_deviation(mouse: Mouse, coords: tuple) -> tuple[np.ndarray, float]:
+
+    # Unpack coordinates
     bregma, lambda_ = coords
     midline = np.array(mouse.data_shape) // 2
     voxel_size = mouse.voxel_size
 
+    # Get the x coordinates
     midline_x = midline[2]
     bregma_x = bregma[2]
     lambda_x = lambda_[2]
 
+    # Compute deviations in mm
     deviation_bregma = (midline_x - bregma_x) * voxel_size[2]
     deviation_lambda = (midline_x - lambda_x) * voxel_size[2]
 
+    # Get the vector for angle calculation
     vector = np.array(bregma) - np.array(lambda_)
     vector = np.array([vector[2], vector[1]])
     vector = vector / np.linalg.norm(vector)
-    print(vector)
     reference = np.array([0,1])
 
     # Calculate the angle between the vector and the reference
@@ -115,16 +188,3 @@ def compute_deviation(mouse: Mouse, coords: tuple):
     deviations = np.array([deviation_bregma, deviation_lambda])
 
     return deviations, angle
-
-
-def inspect_bl(skull_surface: np.array, bregma_coords: np.array, lambda_coords: np.array):
-    plt.figure()
-    plt.imshow(skull_surface, cmap="gray")
-    plt.scatter(bregma_coords[2], bregma_coords[1], c="red", marker='x', s=15, label=f"Bregma (z={bregma_coords[0]})")
-    plt.scatter(lambda_coords[2], lambda_coords[1], c="blue", marker='x', s=15, label=f"Lambd (z={lambda_coords[0]})")
-    plt.title("Transformed Bregma Template")
-    plt.legend()
-    plt.axis("off")
-
-    plt.tight_layout
-    plt.show()
