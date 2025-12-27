@@ -2,31 +2,32 @@
 # 0. Section: Imports
 # ================================================================
 import unittest
+
 from src.neuroframe.pipeline.extract_bl import *
 from src.neuroframe.pipeline.extract_skull import *
-from src.neuroframe.mouse import Mouse
-
-
+from src.neuroframe.utils.save_utils import *
 
 
 
 # ================================================================
 # 1. Section: Test Cases
 # ================================================================
-class TestExtractBL(unittest.TestCase):
-    def test_extract_deformation_map_transformation_not_identity(self):
-        mouse = Mouse.from_folder('P874', 'tests/integration/fixtures/test_experiment/test_mouse_p874')
+class Test03ExtractBL(unittest.TestCase):
+    def test_00_extract_deformation_map_transformation_not_identity(self):
+        mouse = load_object(TEMP_FOLDER + '01_align_mouse.pkl')
         skull = extract_skull(mouse)
+        save_object(skull, TEMP_FOLDER + '02_extract_skull_skull.pkl')
 
-        transform = extract_deformation_map(skull).GetParameters()
+        transform = extract_deformation_map(skull)
+        save_object(transform, TEMP_FOLDER + '03_extract_bl_transform.pkl')
 
         # Assert that the transform parameters are not all zeros (identity)
-        self.assertFalse(all(param == 0 for param in transform), "Deformation map transformation should not be identity")
+        self.assertFalse(all(param == 0 for param in transform.GetParameters()), "Deformation map transformation should not be identity")
 
     def test_get_referece_points_are_within_bounds(self):
-        mouse = Mouse.from_folder('P874', 'tests/integration/fixtures/test_experiment/test_mouse_p874')
-        skull = extract_skull(mouse)
-        transform = extract_deformation_map(skull)
+        mouse = load_object(TEMP_FOLDER + '01_align_mouse.pkl')
+        skull = load_object(TEMP_FOLDER + '02_extract_skull_skull.pkl')
+        transform = load_object(TEMP_FOLDER + '03_extract_bl_transform.pkl')
 
         bregma_template, lambda_template = REF_TEMPLATES
         reference_slide = convert_input(mouse.segmentation.volume[100,:,:])
@@ -49,9 +50,9 @@ class TestExtractBL(unittest.TestCase):
             self.assertTrue(all(0 <= coords[i] < mouse.data_shape[i] for i in range(3)), "Reference point coordinates should be within skull surface bounds")
 
     def test_compute_deviation_is_within_reason(self):
-        mouse = Mouse.from_folder('P874', 'tests/integration/fixtures/test_experiment/test_mouse_p874')
-        skull = extract_skull(mouse)
-        transform = extract_deformation_map(skull)
+        mouse = load_object(TEMP_FOLDER + '01_align_mouse.pkl')
+        skull = load_object(TEMP_FOLDER + '02_extract_skull_skull.pkl')
+        transform = load_object(TEMP_FOLDER + '03_extract_bl_transform.pkl')
 
         bregma_template, lambda_template = REF_TEMPLATES
         reference_slide = convert_input(mouse.segmentation.volume[100,:,:])
@@ -77,6 +78,18 @@ class TestExtractBL(unittest.TestCase):
         # Assert that angle is within a reasonable range (e.g., less than 30 degrees)
         self.assertTrue(angle < 10.0, "Angle should be less than 10 degrees")
 
+    def test_get_bregma_lambda_returns_coordinates(self):
+        mouse = load_object(TEMP_FOLDER + '01_align_mouse.pkl')
+        skull = load_object(TEMP_FOLDER + '02_extract_skull_skull.pkl')
 
+        bregma, lambda_ = get_bregma_lambda(mouse, skull)
+        save_object(bregma, TEMP_FOLDER + '04_extract_bl_bregma.pkl')
+        save_object(lambda_, TEMP_FOLDER + '04_extract_bl_lambda.pkl')
+
+        # Assert that the returned coordinates are tuples of length 3
+        self.assertIsInstance(bregma, tuple, "Bregma should be a tuple")
+        self.assertIsInstance(lambda_, tuple, "Lambda should be a tuple")
+        self.assertEqual(len(bregma), 3, "Bregma should have 3 coordinates (z, y, x)")
+        self.assertEqual(len(lambda_), 3, "Lambda should have 3 coordinates (z, y, x)")
 
         

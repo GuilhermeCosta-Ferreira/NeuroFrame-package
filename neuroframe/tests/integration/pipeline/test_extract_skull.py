@@ -2,17 +2,16 @@
 # 0. Section: Imports
 # ================================================================
 import unittest
+
 from src.neuroframe.pipeline.extract_skull import *
 from src.neuroframe.mouse_data import MicroCT
-
-
 
 
 
 # ================================================================
 # 1. Section: Test Cases
 # ================================================================
-class TestExtractSkull(unittest.TestCase):
+class Test02ExtractSkull(unittest.TestCase):
     def test_cumsum_projection_values(self):
         micro_ct = MicroCT('tests/integration/fixtures/test_experiment/test_mouse_p324/p324_uCT.nii.gz').data
 
