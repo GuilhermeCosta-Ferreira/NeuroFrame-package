@@ -3,6 +3,9 @@
 # ================================================================
 import numpy as np
 
+from ..logger import logger
+
+
 
 # ================================================================
 # 1. Section: Operations
@@ -61,6 +64,11 @@ def normalize(volume: np.ndarray) -> np.ndarray:
 
 	return data_normalized.astype(np.int16)
 
+
+
+# ================================================================
+# 2. Section: Z Projections
+# ================================================================
 def get_z_coord(volume: np.ndarray, coords: tuple, window_size: int = 10) -> int:
 	y, x = coords.astype(int)
 
@@ -79,6 +87,11 @@ def get_z_coord(volume: np.ndarray, coords: tuple, window_size: int = 10) -> int
 
 	return np.round(z).astype(int)
 
+
+
+# ================================================================
+# 3. Section: Separations of Hemispheres
+# ================================================================
 def compute_separation(volume: np.ndarray) -> float:
     # Split the volume into left and right hemispheres
     left_hemisphere, right_hemisphere = separate_volume(volume)
@@ -88,6 +101,13 @@ def compute_separation(volume: np.ndarray) -> float:
     
     #print(f"Difference: {abs(left_per - right_per):.2%}")
     return round(abs(left_per - right_per) * 100, 2)
+
+def logg_separation(volume: np.ndarray, stage: str, previous_t: float | None = None) -> float:
+    t = compute_separation(volume)
+    if(previous_t is None): logger.info(f"Difference at {stage}: {t}%")
+    else: logger.info(f"Improvement at {stage}: {previous_t - t}% ({t}%)")
+
+    return t
 
 def separate_volume(volume: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     left_hemisphere = volume.copy()

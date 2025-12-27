@@ -6,8 +6,10 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 from scipy.ndimage import affine_transform
 
+from ..logger import logger
 from ..mouse import Mouse
 from ..assertions import assert_points_transformed_properly
+from .image_utils import get_z_coord
 
 
 
@@ -120,3 +122,41 @@ def fit_plane(points: np.ndarray) -> tuple[np.ndarray, float, np.ndarray]:
     D = -np.dot(normal, centroid)
     
     return normal, D, centroid
+
+def get_helper_points(mouse: Mouse, ref_coords: np.array, deviation: int) -> tuple[np.array, np.array]:
+    # Get a point to the left (in the x-axis)
+    left_point = np.array([0, ref_coords[1], ref_coords[2]-deviation]).astype(int)
+    left_point[0] = get_z_coord(mouse.micro_ct.data, left_point[1:])
+
+    # Get a point to the right (in the x-axis)
+    right_point = np.array([0, ref_coords[1], ref_coords[2]+deviation]).astype(int)
+    right_point[0] = get_z_coord(mouse.micro_ct.data, right_point[1:])
+
+    return left_point, right_point
+
+def xy_fine_tune(mouse: Mouse, bregma_coords: np.array, deviation: int) -> tuple[np.array, np.array]:
+    # Get auxiliar points from Bregma
+    left_bregma, right_bregma = get_helper_points(mouse, bregma_coords, deviation)
+    second_bregma = np.array([0, bregma_coords[1] - 2, bregma_coords[2]]).astype(int)
+    sleft_bregma, sr_bregma = get_helper_points(mouse, second_bregma, deviation)
+
+    # Fit a plane to the points
+    points = np.stack((left_bregma, right_bregma, sleft_bregma, sr_bregma), axis=0)
+    normal, D, centroid = fit_plane(points)
+    normal[1] = 0 # we only need to rotate around the x-axis
+    logger.info(f"\nPlane normal: {normal}")
+    logger.debug(f"Points: {points}")
+
+    # Get the upper normal
+    if normal[0] < 0: normal = -normal
+
+    # Get the rotation matrix
+    align_matrix, offset = rotate_mice(mouse, normal, [1, 0, 0])
+
+    mri_shape = mouse.data_shape
+
+    for point in points:
+        point = np.round(transform_points(point, mri_shape, align_matrix, offset)).astype(int)
+        logger.debug(f"Points after rotation: {point}")
+
+    return align_matrix, offset

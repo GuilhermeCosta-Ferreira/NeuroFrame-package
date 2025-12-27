@@ -1,5 +1,4 @@
 from neuroframe import *
-import time
 
 mouse = Mouse.from_folder('P874', 'tests/integration/fixtures/test_experiment/test_mouse_p874')
 
