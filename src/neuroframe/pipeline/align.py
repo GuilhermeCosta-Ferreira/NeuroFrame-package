@@ -3,21 +3,20 @@
 # ================================================================
 import numpy as np
 import SimpleITK as sitk
-
 from scipy.ndimage import zoom
 
-from ..utils import count_voxels, enlarge_shape
 from ..logger import logger
-from ..mouse_data import Segmentation
 from ..mouse import Mouse
+from ..mouse_data import Segmentation
 from ..registrator import Registrator
-
+from ..utils import count_voxels, enlarge_shape
 
 # ──────────────────────────────────────────────────────
 # 0.1 Subsection: Universal Constants
 # ──────────────────────────────────────────────────────
-ALLEN_TEMPLATE = Segmentation("src/neuroframe/templates/allen_brain_25μm_ccf_2017.nii.gz")
-
+ALLEN_TEMPLATE = Segmentation(
+    "src/neuroframe/templates/allen_brain_25μm_ccf_2017.nii.gz"
+)
 
 
 # ================================================================
@@ -105,12 +104,14 @@ def align_to_allen(mouse: Mouse, template: Segmentation = ALLEN_TEMPLATE) -> Mou
     True
 
     """
-    
+
     template_volume = adapt_template(mouse, template)
 
     # Does the rigid registration
-    rigid_registration = Registrator(method='rigid', multiple_resolutions=True)
-    _, transform = rigid_registration.register(template_volume, mouse.segmentation.volume)
+    rigid_registration = Registrator(method="rigid", multiple_resolutions=True)
+    _, transform = rigid_registration.register(
+        template_volume, mouse.segmentation.volume
+    )
 
     logger.detail(f"Obtained Transform: {transform.GetParameters()}")
 
@@ -123,7 +124,7 @@ def align_to_allen(mouse: Mouse, template: Segmentation = ALLEN_TEMPLATE) -> Mou
 # ──────────────────────────────────────────────────────
 # 1.1 Subsection: Adapts the Template's Size
 # ──────────────────────────────────────────────────────
-def adapt_template(mouse: Mouse, template: Segmentation) -> np.ndarray:    
+def adapt_template(mouse: Mouse, template: Segmentation) -> np.ndarray:
     """Adapts a template volume to match the size and shape of a mouse volume.
 
     This function resizes a 3D template segmentation by scaling it isotropically
@@ -219,7 +220,7 @@ def adapt_template(mouse: Mouse, template: Segmentation) -> np.ndarray:
     Adapted template voxels: 8
 
     """
-    
+
     # Extract the volumes
     mouse_volume = mouse.segmentation.volume
     template_volume = template.volume
@@ -229,7 +230,7 @@ def adapt_template(mouse: Mouse, template: Segmentation) -> np.ndarray:
     template_size = count_voxels(template_volume)
 
     # Reduce template volume to match mice volume
-    zoom_factor = (mouse_size / template_size) ** (1/3)
+    zoom_factor = (mouse_size / template_size) ** (1 / 3)
     logger.debug(f"Zoom Factor: {zoom_factor.round(2)}")
     template_volume = zoom(template_volume, zoom_factor)
     logger.debug(f"Template shape after zoom: {template_volume.shape}")
@@ -237,16 +238,18 @@ def adapt_template(mouse: Mouse, template: Segmentation) -> np.ndarray:
     # Fix template shape issue
     template_volume = enlarge_shape(template_volume, mouse_volume)
     logger.debug(f"Template shape after filling in: {template_volume.shape}")
-    
+
     return template_volume
 
 
 # ──────────────────────────────────────────────────────
 # 1.2 Subsection: Align Mice to the Template
 # ──────────────────────────────────────────────────────
-def register_mice(mouse: Mouse, template: np.ndarray, transform: sitk.Transform) -> Mouse:
+def register_mice(
+    mouse: Mouse, template: np.ndarray, transform: sitk.Transform
+) -> Mouse:
     """Apply a pre-computed transformation to a mouse's imaging data.
-    
+
     This function takes a `Mouse` object containing MRI, micro-CT, and
     segmentation volumes, and applies a given SimpleITK transformation to
     resample them into the space of a template image. It uses linear
@@ -337,7 +340,7 @@ def register_mice(mouse: Mouse, template: np.ndarray, transform: sitk.Transform)
     >>> # assert np.array_equal(mouse.mri.data, registered_mouse.mri.data)
     >>> # print("Mouse data successfully aligned (conceptually).")
     """
-    
+
     # Initiates the rigid transformation
     reg_transform = Registrator(res_interpolator="linear")
     reg_transform_nearest = Registrator(res_interpolator="nearest")
@@ -345,7 +348,9 @@ def register_mice(mouse: Mouse, template: np.ndarray, transform: sitk.Transform)
     # Apply the rigid transformation to the template and mice volumes
     mri_aligned = reg_transform.resample(template, mouse.mri.data, transform)
     ct_aligned = reg_transform.resample(template, mouse.micro_ct.data, transform)
-    seg_aligned = reg_transform_nearest.resample(template, mouse.segmentation.data, transform)
+    seg_aligned = reg_transform_nearest.resample(
+        template, mouse.segmentation.data, transform
+    )
 
     # Convert back to numpy arrays
     mri_aligned = sitk.GetArrayFromImage(mri_aligned)

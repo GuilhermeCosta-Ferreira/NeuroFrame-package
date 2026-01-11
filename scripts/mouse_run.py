@@ -1,7 +1,22 @@
-from neuroframe import *
+from src.neuroframe import (
+    ALLEN_TEMPLATE,
+    Mouse,
+    adapt_template,
+    align_to_allen,
+    align_to_bl,
+    extract_skull,
+    get_bregma_lambda,
+    plot_alignment,
+    plot_bl,
+    plot_mouse_template_overlay,
+    plot_skull,
+)
+
 
 def main():
-    mouse = Mouse.from_folder('P874', 'tests/integration/fixtures/test_experiment/test_mouse_p874')
+    mouse = Mouse.from_folder(
+        "P874", "tests/integration/fixtures/test_experiment/test_mouse_p874"
+    )
 
     template_vol = adapt_template(mouse, ALLEN_TEMPLATE)
     align_to_allen(mouse)
@@ -20,7 +35,8 @@ def main():
 
     plot_alignment(mouse)
 
-    #dataframe_coords = nf.stereotaxic_coordinates(mice_p324, reference_df, (bregma_coords, lambda_coords), is_parallelized=True, verbose=2, mode='full_inner')
+    # dataframe_coords = nf.stereotaxic_coordinates(mice_p324, reference_df, (bregma_coords, lambda_coords), is_parallelized=True, verbose=2, mode='full_inner')
+
 
 if __name__ == "__main__":
     main()
