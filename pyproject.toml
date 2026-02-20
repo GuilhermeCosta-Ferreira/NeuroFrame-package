@@ -1,0 +1,29 @@
+[project]
+name = "neuroframe"
+version = "0.1.0"
+description = "NeuroFrame is a package created to facilitate the creation of stereotaxic brain atlas"
+authors = [
+    {name = "GuilhermeCF",email = "guilheme.henriquesdacostaferreira@epfl.ch"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy (>=2,<2.3.0)",
+    "nibabel (>=5.3.2,<6.0.0)",
+    "matplotlib (>=3.10.8,<4.0.0)",
+    "pandas (>=2.3.3,<3.0.0)",
+    "simpleitk (>=2.5.3,<3.0.0)",
+    "scipy (>=1.16.3,<2.0.0)",
+    "opencv-python (>=4.12.0.88,<5.0.0.0)",
+    "ipython (>=9.8.0,<10.0.0)",
+    "tqdm (>=4.67.1,<5.0.0)",
+    "scikit-image (>=0.26.0,<0.27.0)",
+    "scikit-learn (>=1.8.0,<2.0.0)",
+]
+
+[tool.poetry]
+packages = [{include = "neuroframe", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
