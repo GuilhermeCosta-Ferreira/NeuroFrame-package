@@ -18,6 +18,8 @@ from neuroframe.utils import get_folders
 
 def main():
     mouse_ids = get_folders("data")
+    mouse_ids[:] = [x for x in mouse_ids if x not in {'T206', 'V257', 'S872'}] # this two are done
+
     segment_df = pd.read_csv("data/annotations_info.csv")
 
     for mouse_id in mouse_ids:

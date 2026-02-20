@@ -2,6 +2,9 @@
 # 0. Section: Imports
 # ================================================================
 import os
+
+import numpy as np
+
 from ..logger import logger
 
 
@@ -23,8 +26,10 @@ def assert_shape_consitency(shapes: list[tuple[int, int, int]]) -> None:
 
 def assert_voxel_size_consitency(voxel_sizes: list[tuple[float, float, float]]) -> None:
     # Check if all voxel sizes match
-    if not all(voxel_size == voxel_sizes[0] for voxel_size in voxel_sizes): 
-        logger.warning("The voxel sizes of the mouse data do not match, defaulted to MRI voxel size.")
+    arr = np.array(voxel_sizes, dtype=float)
+    ref = arr[0]
+    if not np.allclose(arr, ref, rtol=1e-6, atol=1e-9):
+        logger.warning("The voxel sizes of the mouse data do not match (within tolerance), defaulted to MRI voxel size.")
         logger.debug(f"Voxel sizes found: {voxel_sizes}")
 
 def assert_id_folder_consitency(folder_path: str, mouse_id: str) -> None:
@@ -45,7 +50,7 @@ def assert_required_files(folder: str):
         if not any(req_file in file for file in folder_files):
             logger.critical(f"Required file ending with '{req_file}' not found in folder '{folder}'.")
             raise FileNotFoundError(f"Required file ending with '{req_file}' not found in folder '{folder}'.")
-        
+
 def assert_no_extra_files(folder: str):
     required_files = ['_mri', '_uCT', '_seg']
     folder_files = os.listdir(folder)

@@ -16,58 +16,57 @@ from ..assertions import assert_all_from_same_parent
 def layer_colapsing(mouse: Mouse, data: pd.DataFrame) -> np.ndarray:
     """Collapse contiguous layer segments into their shared parent segment and update labels.
 
-    Iterates over segment metadata to detect entries labeled as layers that share the
-    same parent, replaces their voxel IDs in the segmentation volume with the parent ID,
-    and updates the mouse segmentation labels if any collapse occurs.
+        Iterates over segment metadata to detect entries labeled as layers that share the
+        same parent, replaces their voxel IDs in the segmentation volume with the parent ID,
+        and updates the mouse segmentation labels if any collapse occurs.
 
-    Parameters
-    ----------
-    mouse : Mouse
-        Mouse object containing the segmentation volume (`mouse.segmentation.data`) and
-        labels (`mouse.segmentation.labels`) to be updated in place.
-    data : pandas.DataFrame
-        Table with segment metadata. Expected to contain at least ``'id'``, ``'name'``,
-        and ``'parent_id'`` columns; entries with ``'name'`` containing ``"layer"``
-        (case-insensitive) are considered for collapsing.
+        Parameters
+        ----------
+        mouse : Mouse
+            Mouse object containing the segmentation volume (`mouse.segmentation.data`) and
+            labels (`mouse.segmentation.labels`) to be updated in place.
+        data : pandas.DataFrame
+            Table with segment metadata. Expected to contain at least ``'id'``, ``'name'``,
+            and ``'parent_id'`` columns; entries with ``'name'`` containing ``"layer"``
+            (case-insensitive) are considered for collapsing.
 
-    Returns
-    -------
-    numpy.ndarray
-        Updated segmentation labels after collapsing (may be unchanged if no layers were
-        collapsed).
+        Returns
+        -------
+        numpy.ndarray
+            Updated segmentation labels after collapsing (may be unchanged if no layers were
+            collapsed).
 
-    Raises
-    ------
-    AssertionError
-        If detected layer entries do not share the same ``parent_id``.
+        Raises
+        ------
+        AssertionError
+            If detected layer entries do not share the same ``parent_id``.
 
-    Side Effects
-    ------------
-    Mutates ``mouse.segmentation.data`` when layers are collapsed and emits log messages
-    via the module logger.
+        Side Effects
+        ------------
+        Mutates ``mouse.segmentation.data`` when layers are collapsed and emits log messages
+        via the module logger.
 
-    Notes
-    -----
-    Assumes that layer segments are contiguous in ``data`` and share a common
-    ``parent_id``. Background segment is excluded when counting segments before and
-    after collapsing. Behavior is undefined if ``data`` lacks required columns.
+        Notes
+        -----
+        Assumes that layer segments are contiguous in ``data`` and share a common
+        ``parent_id``. Background segment is excluded when counting segments before and
+        after collapsing. Behavior is undefined if ``data`` lacks required columns.
 
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> mock_mouse = Mouse()  # assumes a Mouse with segmentation fields is initialized
-    >>> mock_mouse.segmentation.data = np.array([[1, 2], [3, 4]])
-    >>> mock_mouse.segmentation.labels = np.array([0, 1, 2, 3, 4])
-    >>> df = pd.DataFrame({
-    ...     'id': [2, 3],
-    ...     'name': ['Layer 1', 'Layer 2'],
-    ...     'parent_id': [5, 5],
-    ... })
-    >>> layer_colapsing(mock_mouse, df)  # doctest: +SKIP
-    array([...])
-    """
-    
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> mock_mouse = Mouse()  # assumes a Mouse with segmentation fields is initialized
+        >>> mock_mouse.segmentation.data = np.array([[1, 2], [3, 4]])
+        >>> mock_mouse.segmentation.labels = np.array([0, 1, 2, 3, 4])
+        >>> df = pd.DataFrame({
+        ...     'id': [2, 3],
+        ...     'name': ['Layer 1', 'Layer 2'],
+        ...     'parent_id': [5, 5],
+        ... })
+        >>> layer_colapsing(mock_mouse, df)  # doctest: +SKIP
+        array([...])"""
+
     segments = mouse.segmentation.data
     original_nr_segments = len(mouse.segmentation.labels)
     layer_indexs = []

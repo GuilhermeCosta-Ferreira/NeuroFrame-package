@@ -910,8 +910,8 @@ def alert_not_isotropic_voxel(voxel_size: np.ndarray):
     is_isotropic = (voxel_size[0] == voxel_size[1]) and (voxel_size[0] == voxel_size[2])
 
     # Warn if they are met
-    if(not is_isotropic):
-        warnings.warn("WARNING: Voxel size is not isotropic, this may cause issues in the conversion to um coordinates.")
+    #if(not is_isotropic):
+        #warnings.warn("WARNING: Voxel size is not isotropic, this may cause issues in the conversion to um coordinates.")
 
 
 
