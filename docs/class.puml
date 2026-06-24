@@ -45,7 +45,158 @@ package "Service Layer" #E8F5E9 {
 'Model Domain'
 '=============================================================================='
 package "Model Domain Layer" #FFF8E1 {
+    enum VolumeKey <<planned>> {
+        + DEFAULT
+        + MRI
+        + uCT
+        + SEGMENTATION
+    }
 
+
+    enum Orientation <<planned>> {
+        + PSL
+        + ASL
+        + PIM
+        ...
+    }
+
+
+    abstract class VolumeData <<planned>> {
+        + data: NDArray
+        + key: VolumeKey
+        + resolution: tuple[float, float, float]
+        + unit: tuple[str, str, str]
+        + orientation: Orientation
+        + shape: tuple[int, int, int]
+
+        - _contains_labels: bool = False
+
+        + copy_with(): Self
+    }
+    VolumeData --> VolumeKey
+    VolumeData --> Orientation
+
+
+    class MRI <<planned>> {
+        + copy_with(): Self
+    }
+    MRI --|> VolumeData
+
+
+    class uCT <<planned>> {
+        + copy_with(): Self
+    }
+    uCT --|> VolumeData
+
+
+    class Segmentation <<planned>> {
+        + look_up: pd.DataFrame
+        + segment_labels: list[int]
+        + background_segment: int
+
+        + copy_with(): Self
+    }
+    Segmentation --|> VolumeData
+
+
+    class MouseData <<planned>> {
+        + data: dict[VolumeKey, VolumeData]
+
+        + copy_with(): Self
+    }
+    MouseData o-- VolumeData
+    MouseData o-- VolumeKey
+
+
+    interface AbstractTransformation <<planned>>{
+        + apply(batch: SampleBatch): SampleBatch
+    }
+    !if ($SHOW_DEPENDENCIES == 1)
+    AbstractTransformation ..> MouseData
+    !endif
+
+
+    class OrientMouse <<planned>> {
+        + target_orientation: Orientation
+
+        - _orient_volume(...): VolumeData
+    }
+    OrientMouse ..|> AbstractTransformation
+    OrientMouse --> Orientation
+    !if ($SHOW_DEPENDENCIES == 1)
+    OrientMouse ..> VolumeData
+    !endif
+
+
+    class OtherTransformations <<planned>> {
+        + hyperparameters: Any
+
+        - _helper_functions(inputs): Any
+    }
+    OtherTransformations ..|> AbstractTransformation
+
+
+    note right of OtherTransformations
+    This includes all of the otehr transformations.
+    Please refer to the transformation diagram for
+    more information
+
+    Examples:
+    - OrientMouse
+    - NormaliseIntensity
+    - AlignToPCA
+    - ExtractSkullSurface
+    - ExtractBLSpace
+    end note
+
+
+    class PipelineSpec <<planned>> {
+        + pipeline_name: str
+        + steps: list[Type[AbstractTransformation]]
+        + config: PipelineConfig
+
+        + add_step(step: Type[AbstractTransformation]): None
+        + add_list(steps: list[Type[AbstractTransformation]]): None
+        + insert_step(index: int, step: Type[AbstractTransformation]): None
+        + remove_step(index: int): None
+        + clear(): None
+    }
+    PipelineSpec *-- PipelineConfig
+    !if ($SHOW_DEPENDENCIES == 1)
+    PipelineSpec ..> AbstractTransformation : step types
+    !endif
+
+
+
+    class PipelineConfig <<planned>> {
+        + config: Mapping[str, Any]
+        {static} + RESERVED_KEYS: set[str]
+
+        + mouse: str
+        + pipeline_id: int
+        + pipeline_name: str
+
+        + step_names: list[str]
+
+        + __post_init__(): None
+        + validate(): None
+
+        + has_step(step_name: str): bool
+        + step_params(step_name: str): dict[str, Any]
+        + step_config(step_name: str): StepConfig
+        + step_configs(ordered_step_names: list[str]): list[StepConfig]
+        + to_dict(): dict[str, Any]
+
+        - _require_key(key: str): None
+    }
+    PipelineConfig o-- StepConfig
+
+
+    class StepConfig <<planned>> {
+        + name: str
+        + enabled: bool
+        + parameters: dict
+    }
 }
 
 
