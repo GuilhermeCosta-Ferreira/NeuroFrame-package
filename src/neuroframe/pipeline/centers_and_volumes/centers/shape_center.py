@@ -3,6 +3,7 @@
 # ================================================================
 import numpy as np
 
+from ....logger import logger
 from ....registrator import Registrator
 from ....mouse import Mouse
 from ...segment_pca import (
@@ -48,12 +49,19 @@ def get_shape_centers(
     seg_right = np.where(seg_right_nedt > 0, 1, 0)
 
     # 2. Do the rigid registration to the mci shape
-    wt_trs_left, left_transform = SEGMENT_REGISTRATOR.register(
-        seg_left, wt_left
-    )
-    wt_trs_right, right_transform = SEGMENT_REGISTRATOR.register(
-        seg_right, wt_right
-    )
+    try:
+        wt_trs_left, left_transform = SEGMENT_REGISTRATOR.register(
+            seg_left, wt_left
+        )
+        wt_trs_right, right_transform = SEGMENT_REGISTRATOR.register(
+            seg_right, wt_right
+        )
+    except RuntimeError as e:
+        logger.warning(f"Registration failed for segment {seg_lab}: {e}")
+        return (
+            Center.empty(seg_lab),
+            PCASummary.empty(seg_lab)
+        )
 
     # 3. Get the WT NEDT
     wt_left_nedt = np.where(wt_seg == 1, template_mouse.segmentation_nedt.data, 0)
