@@ -349,46 +349,113 @@ package "Adapter Layer" #E3F2FD {
     Repository --> Source
 
 
-    class DataLoader <<planned>>{
+    package "Data Loading"{
+        class DataLoader <<planned>>{
+            + source: Source
+
+            - _raw_loader: RawDataLoader
+            - _step_loader: StepDataLoader
+
+            + load_metadata() -> dict
+            + load_raw(): MouseData
+            + load_batch(pipeline_id: int, step_id: int): MouseData
+        }
+        DataLoader --> Source
+        DataLoader --> RawDataLoader
+        DataLoader --> StepDataLoader
+        !if ($SHOW_DEPENDENCIES == 1)
+        DataLoader ..> MouseData
+        !endif
+
+
+        class RawDataLoader <<planned>>{
+            + load_volume(): VolumeData
+        }
+        !if ($SHOW_DEPENDENCIES == 1)
+        RawDataLoader ..> VolumeData
+        !endif
+
+
+        class StepDataLoader <<planned>>{
+            + load_volume(paths: list[Path]): VolumeData
+            + load_plane(paths: list[Path]): PlaneData
+            + load_table(paths: list[Path]): TableData
+            + load_series(paths: list[Path]): SeriesData
+            + load_plots(paths: list[Path]): PlotSpec
+        }
+        !if ($SHOW_DEPENDENCIES == 1)
+        StepDataLoader ..> VolumeData
+        StepDataLoader ..> PlaneData
+        StepDataLoader ..> TableData
+        StepDataLoader ..> SeriesData
+        StepDataLoader ..> PlotSpec
+        !endif
+    }
+
+    class DataDownloader <<planned>>{
         + source: Source
 
-        - _raw_loader: RawDataLoader
-        - _step_loader: StepDataLoader
+        + download_batch(mouse: MouseData, pipeline_id: int, step_id: int): Path
 
-        + load_metadata() -> dict
-        + load_raw(): MouseData
-        + load_batch(pipeline_id: int, step_id: int): MouseData
+        - _download_volume(volume: Volumedata, pipeline_id: int, step_id: int): Path
+        - _download_plane(plane: PlaneData, pipeline_id: int, step_id: int): Path
+        - _download_table(table: TableData, pipeline_id: int, step_id: int): Path
+        - _download_series(series: SeriesData, pipeline_id: int, step_id: int): Path
+        - _download_plot(plot: PlotSpec, pipeline_id: int, step_id: int): Path
     }
-    DataLoader --> Source
-    DataLoader --> RawDataLoader
-    DataLoader --> StepDataLoader
+    DataDownloader --> Source
     !if ($SHOW_DEPENDENCIES == 1)
-    DataLoader ..> MouseData
+    DataDownloader ..> MouseData
+    DataDownloader ..> VolumeData
+    DataDownloader ..> PlaneData
+    DataDownloader ..> TableData
+    DataDownloader ..> SeriesData
+    DataDownloader ..> PlotSpec
     !endif
 
 
-    class RawDataLoader <<planned>>{
-        + load_volume(): VolumeData
-    }
-    !if ($SHOW_DEPENDENCIES == 1)
-    RawDataLoader ..> VolumeData
-    !endif
+    package "Data Converter"{
+        class DataConverter <<planned>> {
+            + source: Source
+
+            - _nii_converter: HDF5_to_Nii
+            - _ply_converter: HDF5_to_Ply
+
+            + convert_batch(pipeline_id: int, step_id: int, out_file_type: str) -> Path
+        }
+        DataConverter --> Source
+        DataConverter --> HDF5_to_Nii
+        DataConverter --> HDF5_to_Ply
+
+        class HDF5_to_Nii <<planned>> {
+            + source: Source
+
+            + convert_mouse(mouse: MouseData, step_path: Path): list[Path]
+            - _convert_volume(volume: VolumeData, step_path: Path): Path
+            - _convert_segmentation(seg: VolumeData, step_path: Path): Path
+        }
+        HDF5_to_Nii --> Source
+        !if ($SHOW_DEPENDENCIES == 1)
+        HDF5_to_Nii ..> MouseData
+        HDF5_to_Nii ..> VolumeData
+        !endif
 
 
-    class StepDataLoader <<planned>>{
-        + load_volume(paths: list[Path]): VolumeData
-        + load_plane(paths: list[Path]): PlaneData
-        + load_table(paths: list[Path]): TableData
-        + load_series(paths: list[Path]): SeriesData
-        + load_plots(paths: list[Path]): PlotSpec
+        class HDF5_to_Ply <<planned>> {
+            + source: Source
+
+            + convert_mouse(mouse: MouseData, step_path): list[Path]
+            - _convert_volume(volume: VolumeData, step_path: Path): Path
+            - _convert_segmentation(seg: VolumeData, step_path: Path): Path
+        }
+        HDF5_to_Ply --> Source
+        !if ($SHOW_DEPENDENCIES == 1)
+        HDF5_to_Ply ..> MouseData
+        HDF5_to_Ply ..> Atlas
+        HDF5_to_Ply ..> VolumeData
+        !endif
+
     }
-    !if ($SHOW_DEPENDENCIES == 1)
-    StepDataLoader ..> VolumeData
-    StepDataLoader ..> PlaneData
-    StepDataLoader ..> TableData
-    StepDataLoader ..> SeriesData
-    StepDataLoader ..> PlotSpec
-    !endif
 }
 
 
