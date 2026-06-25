@@ -45,20 +45,19 @@ package "Service Layer" #E8F5E9 {
 'Model Domain'
 '=============================================================================='
 package "Model Domain Layer" #FFF8E1 {
-    package "Data Containers"{
+    enum Orientation <<planned>> {
+        + PSL
+        + ASL
+        + PIM
+        ...
+    }
+
+    package "Volumetric Containers"{
         enum VolumeKey <<planned>> {
             + DEFAULT
             + MRI
             + uCT
             + SEGMENTATION
-        }
-
-
-        enum Orientation <<planned>> {
-            + PSL
-            + ASL
-            + PIM
-            ...
         }
 
 
@@ -98,16 +97,110 @@ package "Model Domain Layer" #FFF8E1 {
             + copy_with(): Self
         }
         Segmentation --|> VolumeData
+    }
 
 
-        class MouseData <<planned>> {
-            + data: dict[VolumeKey, VolumeData]
+    package "Planar Containers"{
+        enum PlaneKey <<planned>> {
+            + DEFAULT
+            + SKULL_PROJECTION
+        }
+
+
+        abstract class PlaneData <<planned>> {
+            + data: NDArray
+            + key: PlaneKey
+            + resolution: tuple[float, float]
+            + unit: tuple[str, str]
+            + orientation: Orientation
+            + shape: tuple[int, int]
+
+            - _contains_labels: bool = False
 
             + copy_with(): Self
         }
-        MouseData o-- VolumeData
-        MouseData o-- VolumeKey
+        PlaneData --> PlaneKey
+        PlaneData --> Orientation
+
+
+        class SkullProjection <<planned>> {
+            + method_name: str
+        }
+        SkullProjection --|> PlaneData
     }
+
+
+    package "Data Containers"{
+        enum TableKey <<planned>> {
+            + DEFAULT
+        }
+
+
+        abstract class TableData <<planned>> {
+            + data: pl.DataFrame
+            + key: TableKey
+            + description: str | None
+
+            + copy_with(): Self
+        }
+        TableData --> TableKey
+
+
+        enum SeriesKey <<planned>> {
+            + DEFAULT
+        }
+
+        abstract class SeriesData <<planned>> {
+            + x: NDArray
+            + y: NDArray
+            + key: SeriesKey
+            + x_label: str
+            + y_label: str
+            + x_unit: str | None
+            + y_unit: str | None
+
+            + copy_with(): Self
+        }
+        SeriesData --> SeriesKey
+
+
+        enum PlotKey <<planned>> {
+            + DEFAULT
+        }
+
+
+        abstract class PlotSpec <<planned>> {
+            + key: PlotKey
+            + title: str
+            + x_label: str | None
+            + y_label: str | None
+            + parameters: dict[str, Any]
+
+            + copy_with(): Self
+        }
+        PlotSpec --> PlotKey
+    }
+
+
+    class MouseData <<planned>> {
+        + volumes: dict[VolumeKey, VolumeData]
+        + planes: dict[PlaneKey, PlaneData]
+        + tables: dict[TableKey, TableData]
+        + series: dict[SeriesKey, SeriesData]
+        + plot_specs: dict[PlotKey, PlotSpec]
+
+        + copy_with(): Self
+    }
+    MouseData o-- VolumeData
+    MouseData o-- VolumeKey
+    MouseData o-- PlaneData
+    MouseData o-- PlaneKey
+    MouseData o-- TableData
+    MouseData o-- TableKey
+    MouseData o-- SeriesData
+    MouseData o-- SeriesKey
+    MouseData o-- PlotSpec
+    MouseData o-- PlotKey
 
 
     package "Transformations"{
@@ -165,9 +258,7 @@ package "Model Domain Layer" #FFF8E1 {
         + remove_step(index: int): None
         + clear(): None
     }
-    !if ($SHOW_DEPENDENCIES == 1)
     PipelineSpec ..> AbstractTransformation : step types
-    !endif
 
 
     package "Config" {
@@ -236,8 +327,68 @@ package "Model Domain Layer" #FFF8E1 {
 'Adapter Layer'
 '=============================================================================='
 package "Adapter Layer" #E3F2FD {
+    class Source <<planned>> {
+        + mouse: str
+        + base_path: Path
+
+        + folder_path: Path
+        + file_base_name: str
+        + raw_path: Path
+    }
 
 
+    class Repository <<planned>> {
+        + source: Source
+
+        - _pipeline_base_name: str
+        - _config_path: Path
+
+        + init_project(): None
+        + init_new_pipleine(pipeline_id: int): None
+    }
+    Repository --> Source
+
+
+    class DataLoader <<planned>>{
+        + source: Source
+
+        - _raw_loader: RawDataLoader
+        - _step_loader: StepDataLoader
+
+        + load_metadata() -> dict
+        + load_raw(): MouseData
+        + load_batch(pipeline_id: int, step_id: int): MouseData
+    }
+    DataLoader --> Source
+    DataLoader --> RawDataLoader
+    DataLoader --> StepDataLoader
+    !if ($SHOW_DEPENDENCIES == 1)
+    DataLoader ..> MouseData
+    !endif
+
+
+    class RawDataLoader <<planned>>{
+        + load_volume(): VolumeData
+        + load_atlas(): Atlas
+        + load_tissue(): ClearVolume
+    }
+    !if ($SHOW_DEPENDENCIES == 1)
+    RawDataLoader ..> ClearPoints
+    RawDataLoader ..> ClearVolume
+    RawDataLoader ..> Atlas
+    !endif
+
+
+    class StepDataLoader <<planned>>{
+        + load_cells(paths: list[Path]): ClearPoints | ClearVolume
+        + load_atlas(paths: list[Path]): Atlas
+        + load_tissue(paths: list[Path]): ClearVolume
+    }
+    !if ($SHOW_DEPENDENCIES == 1)
+    StepDataLoader ..> ClearPoints
+    StepDataLoader ..> ClearVolume
+    StepDataLoader ..> Atlas
+    !endif
 }
 
 
