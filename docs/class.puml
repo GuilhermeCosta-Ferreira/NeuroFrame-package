@@ -369,25 +369,25 @@ package "Adapter Layer" #E3F2FD {
 
     class RawDataLoader <<planned>>{
         + load_volume(): VolumeData
-        + load_atlas(): Atlas
-        + load_tissue(): ClearVolume
     }
     !if ($SHOW_DEPENDENCIES == 1)
-    RawDataLoader ..> ClearPoints
-    RawDataLoader ..> ClearVolume
-    RawDataLoader ..> Atlas
+    RawDataLoader ..> VolumeData
     !endif
 
 
     class StepDataLoader <<planned>>{
-        + load_cells(paths: list[Path]): ClearPoints | ClearVolume
-        + load_atlas(paths: list[Path]): Atlas
-        + load_tissue(paths: list[Path]): ClearVolume
+        + load_volume(paths: list[Path]): VolumeData
+        + load_plane(paths: list[Path]): PlaneData
+        + load_table(paths: list[Path]): TableData
+        + load_series(paths: list[Path]): SeriesData
+        + load_plots(paths: list[Path]): PlotSpec
     }
     !if ($SHOW_DEPENDENCIES == 1)
-    StepDataLoader ..> ClearPoints
-    StepDataLoader ..> ClearVolume
-    StepDataLoader ..> Atlas
+    StepDataLoader ..> VolumeData
+    StepDataLoader ..> PlaneData
+    StepDataLoader ..> TableData
+    StepDataLoader ..> SeriesData
+    StepDataLoader ..> PlotSpec
     !endif
 }
 
