@@ -52,6 +52,14 @@ package "Model Domain Layer" #FFF8E1 {
         ...
     }
 
+
+    enum Orientation2D <<planned>> {
+        + PS
+        + AS
+        + PI
+        ...
+    }
+
     package "Volumetric Containers"{
         enum VolumeKey <<planned>> {
             + DEFAULT
@@ -120,7 +128,7 @@ package "Model Domain Layer" #FFF8E1 {
             + copy_with(): Self
         }
         PlaneData --> PlaneKey
-        PlaneData --> Orientation
+        PlaneData --> Orientation2D
 
 
         class SkullProjection <<planned>> {
@@ -337,18 +345,6 @@ package "Adapter Layer" #E3F2FD {
     }
 
 
-    class Repository <<planned>> {
-        + source: Source
-
-        - _pipeline_base_name: str
-        - _config_path: Path
-
-        + init_project(): None
-        + init_new_pipleine(pipeline_id: int): None
-    }
-    Repository --> Source
-
-
     package "Data Loading"{
         class DataLoader <<planned>>{
             + source: Source
@@ -454,8 +450,75 @@ package "Adapter Layer" #E3F2FD {
         HDF5_to_Ply ..> Atlas
         HDF5_to_Ply ..> VolumeData
         !endif
-
     }
+
+
+    package "Repository Layer"{
+        class PipelineConfigRepository <<planned>> {
+            + source: Source
+
+            + load_config(pipeline_id: int): PipelineConfig
+            + update_config(pipeline_id: int, config: PipelineConfig): None
+        }
+        PipelineConfigRepository --> Source
+        !if ($SHOW_DEPENDENCIES == 1)
+        PipelineConfigRepository ..> PipelineConfig
+        !endif
+
+
+        class StepManifestRepository <<planned>> {
+            + source: Source
+
+            + load_manifest(pipeline_id: int, step_id: int): StepManifest
+            + save_manifest(manifest: StepManifest): None
+            + find_by_signature(signature: str): StepManifest | None
+            + resolve_redirect(pipeline_id: int, step_id: int): StepManifest
+        }
+        StepManifestRepository --> Source
+        !if ($SHOW_DEPENDENCIES == 1)
+        StepManifestRepository ..> StepStatus
+        !endif
+
+
+        class Repository <<planned>> {
+            + source: Source
+
+            - _pipeline_base_name: str
+            - _config_path: Path
+
+            + init_project(): None
+            + init_new_pipleine(pipeline_id: int): None
+        }
+        Repository --> Source
+    }
+
+
+    class DataIO <<planned>> {
+        + source: Source
+
+        - _loader: DataLoader
+        - _downloader: DataDownloader
+        - _converter: DataConverter
+        - _pipeline_repo: PipelineConfigRepository
+        - _step_manifest_repo: StepManifestRepository
+
+        + load_raw(): MouseData
+        + load_batch(pipeline_id: int, step_id: int): MouseData
+        + download_batch(batch: MouseData, pipeline_id: int, step_id: int): Path
+        + load_config(pipeline_id: int): PipelineConfig
+        + find_reusable_step(signature: StepSignature): StepManifest | None
+        + save_step_manifest(pipeline_id: int, step_id: int, step_name: str, signature: str, status: str): None
+        + save_redirect(pipeline_id: int, step_id: int, source_pipeline_id: int, source_step_id: int, signature: str): None
+        + convert_batch(pipeline_id: int, step_id: int, out_file_type: str) -> Path
+    }
+    DataIO --> Source
+    DataIO --> DataLoader
+    DataIO --> DataDownloader
+    DataIO --> PipelineConfigRepository
+    !if ($SHOW_DEPENDENCIES == 1)
+    DataIO ..> PipelineConfig
+    DataIO ..> MouseData
+    !endif
 }
 
 
