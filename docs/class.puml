@@ -1,6 +1,10 @@
 @startuml
 left to right direction
 skinparam linetype ortho
+skinparam nodesep 20
+skinparam ranksep 25
+skinparam shadowing false
+
 skinparam class {
 BackgroundColor<<implemented>> #D5F5D5
 BorderColor<<implemented>> #2E7D32
@@ -36,7 +40,43 @@ endlegend
 'Service Layer'
 '=============================================================================='
 package "Service Layer" #E8F5E9 {
+    class PipelineRunner <<planned>>{
+        + io: DataIO
+        + signature_builder: StepSignatureBuilder
+        + run(pipeline: PipelineSpec, batch: MouseData, pipeline_id: int, save_intermediate: bool): None
+    }
+    PipelineRunner --> StepSignatureBuilder
+    !if ($SHOW_DEPENDENCIES == 1)
+    PipelineRunner ..> PipelineSpec
+    PipelineRunner ..> MouseData
+    !endif
 
+
+    class ClearTissueProject <<planned>>{
+        + source: Source,
+        + clear_io: DataIO,
+        + runner: PipelineRunner,
+
+        + init(mouse: str, tissue_type: TissueType, folder_path: Path): ClearTissueProject
+        + load_raw(): MouseData
+        + init_pipeline(): PipelineSpec
+        + run_pipeline(pipeline: PipelineSpec, batch: MouseData, save_intermediate: bool): MouseData
+    }
+    ClearTissueProject --> PipelineRunner
+    !if ($SHOW_DEPENDENCIES == 1)
+    ClearTissueProject ..> MouseData
+    ClearTissueProject ..> PipelineSpec
+    !endif
+
+
+    class StepSignatureBuilder <<planned>> {
+        + build(step: Type[Transformation], params: dict, input_batch: MouseData): StepSignature
+    }
+    !if ($SHOW_DEPENDENCIES == 1)
+    StepSignatureBuilder ..> MouseData
+    StepSignatureBuilder ..> Transformation
+    StepSignatureBuilder ..> StepSignature
+    !endif
 }
 
 
@@ -213,7 +253,7 @@ package "Model Domain Layer" #FFF8E1 {
 
     package "Transformations"{
         interface AbstractTransformation <<planned>>{
-            + apply(batch: SampleBatch): SampleBatch
+            + apply(batch: MouseData): MouseData
         }
         !if ($SHOW_DEPENDENCIES == 1)
         AbstractTransformation ..> MouseData
@@ -527,6 +567,8 @@ package "Adapter Layer" #E3F2FD {
 'Broken Links'
 '=============================================================================='
 PipelineSpec *-- PipelineConfig
+PipelineRunner --> DataIO
+ClearTissueProject --> DataIO
 @enduml
 
 
