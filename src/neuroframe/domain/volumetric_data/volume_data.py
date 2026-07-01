@@ -13,15 +13,14 @@ from ..orientation import Orientation
 # ================================================================
 # 1. Section: Functions
 # ================================================================
-@dataclass
+@dataclass(kw_only=True)
 class VolumeData:
     data : NDArray
     key: VolumeKey
     resolution: tuple[float, float, float]
     unit: tuple[str, str, str]
     orientation: Orientation
-
-    contains_labels: bool = False
+    contains_labels: bool
 
     @property
     def shape(self) -> tuple[int, int, int]:
