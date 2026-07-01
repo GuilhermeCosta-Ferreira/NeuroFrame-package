@@ -1,0 +1,576 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 20
+skinparam ranksep 25
+skinparam shadowing false
+
+skinparam class {
+BackgroundColor<<implemented>> #D5F5D5
+BorderColor<<implemented>> #2E7D32
+FontColor<<implemented>> #1B5E20
+
+BackgroundColor<<partial>> #FFF3CD
+BorderColor<<partial>> #B8860B
+FontColor<<partial>> #7A5600
+
+BackgroundColor<<planned>> #F8D7DA
+BorderColor<<planned>> #B02A37
+FontColor<<planned>> #842029
+
+BackgroundColor<<external>> #E3F2FD
+BorderColor<<external>> #1565C0
+FontColor<<external>> #0D47A1
+}
+
+legend right
+|= Colour |
+|<#D5F5D5> Implemented |
+|<#FFF3CD> Partially implemented |
+|<#F8D7DA> Planned / not implemented |
+|<#E3F2FD> External dependency |
+endlegend
+
+' 0 = hide dependency lines
+' 1 = show dependency lines
+!$SHOW_DEPENDENCIES = 0
+
+
+'=============================================================================='
+'Service Layer'
+'=============================================================================='
+package "Service Layer" #E8F5E9 {
+    class PipelineRunner <<planned>>{
+        + io: DataIO
+        + signature_builder: StepSignatureBuilder
+        + run(pipeline: PipelineSpec, batch: MouseData, pipeline_id: int, save_intermediate: bool): None
+    }
+    PipelineRunner --> StepSignatureBuilder
+    !if ($SHOW_DEPENDENCIES == 1)
+    PipelineRunner ..> PipelineSpec
+    PipelineRunner ..> MouseData
+    !endif
+
+
+    class ClearTissueProject <<planned>>{
+        + source: Source,
+        + clear_io: DataIO,
+        + runner: PipelineRunner,
+
+        + init(mouse: str, tissue_type: TissueType, folder_path: Path): ClearTissueProject
+        + load_raw(): MouseData
+        + init_pipeline(): PipelineSpec
+        + run_pipeline(pipeline: PipelineSpec, batch: MouseData, save_intermediate: bool): MouseData
+    }
+    ClearTissueProject --> PipelineRunner
+    !if ($SHOW_DEPENDENCIES == 1)
+    ClearTissueProject ..> MouseData
+    ClearTissueProject ..> PipelineSpec
+    !endif
+
+
+    class StepSignatureBuilder <<planned>> {
+        + build(step: Type[Transformation], params: dict, input_batch: MouseData): StepSignature
+    }
+    !if ($SHOW_DEPENDENCIES == 1)
+    StepSignatureBuilder ..> MouseData
+    StepSignatureBuilder ..> Transformation
+    StepSignatureBuilder ..> StepSignature
+    !endif
+}
+
+
+
+'=============================================================================='
+'Model Domain'
+'=============================================================================='
+package "Model Domain Layer" #FFF8E1 {
+    enum Orientation <<planned>> {
+        + PSL
+        + ASL
+        + PIM
+        ...
+    }
+
+
+    enum Orientation2D <<planned>> {
+        + PS
+        + AS
+        + PI
+        ...
+    }
+
+    package "Volumetric Containers"{
+        enum VolumeKey <<planned>> {
+            + DEFAULT
+            + MRI
+            + uCT
+            + SEGMENTATION
+        }
+
+
+        abstract class VolumeData <<planned>> {
+            + data: NDArray
+            + key: VolumeKey
+            + resolution: tuple[float, float, float]
+            + unit: tuple[str, str, str]
+            + orientation: Orientation
+            + shape: tuple[int, int, int]
+
+            - _contains_labels: bool = False
+
+            + copy_with(): Self
+        }
+        VolumeData --> VolumeKey
+        VolumeData --> Orientation
+
+
+        class MRI <<planned>> {
+            + copy_with(): Self
+        }
+        MRI --|> VolumeData
+
+
+        class uCT <<planned>> {
+            + copy_with(): Self
+        }
+        uCT --|> VolumeData
+
+
+        class Segmentation <<planned>> {
+            + look_up: pd.DataFrame
+            + segment_labels: list[int]
+            + background_segment: int
+
+            + copy_with(): Self
+        }
+        Segmentation --|> VolumeData
+    }
+
+
+    package "Planar Containers"{
+        enum PlaneKey <<planned>> {
+            + DEFAULT
+            + SKULL_PROJECTION
+        }
+
+
+        abstract class PlaneData <<planned>> {
+            + data: NDArray
+            + key: PlaneKey
+            + resolution: tuple[float, float]
+            + unit: tuple[str, str]
+            + orientation: Orientation
+            + shape: tuple[int, int]
+
+            - _contains_labels: bool = False
+
+            + copy_with(): Self
+        }
+        PlaneData --> PlaneKey
+        PlaneData --> Orientation2D
+
+
+        class SkullProjection <<planned>> {
+            + method_name: str
+        }
+        SkullProjection --|> PlaneData
+    }
+
+
+    package "Data Containers"{
+        enum TableKey <<planned>> {
+            + DEFAULT
+        }
+
+
+        abstract class TableData <<planned>> {
+            + data: pl.DataFrame
+            + key: TableKey
+            + description: str | None
+
+            + copy_with(): Self
+        }
+        TableData --> TableKey
+
+
+        enum SeriesKey <<planned>> {
+            + DEFAULT
+        }
+
+        abstract class SeriesData <<planned>> {
+            + x: NDArray
+            + y: NDArray
+            + key: SeriesKey
+            + x_label: str
+            + y_label: str
+            + x_unit: str | None
+            + y_unit: str | None
+
+            + copy_with(): Self
+        }
+        SeriesData --> SeriesKey
+
+
+        enum PlotKey <<planned>> {
+            + DEFAULT
+        }
+
+
+        abstract class PlotSpec <<planned>> {
+            + key: PlotKey
+            + title: str
+            + x_label: str | None
+            + y_label: str | None
+            + parameters: dict[str, Any]
+
+            + copy_with(): Self
+        }
+        PlotSpec --> PlotKey
+    }
+
+
+    class MouseData <<planned>> {
+        + volumes: dict[VolumeKey, VolumeData]
+        + planes: dict[PlaneKey, PlaneData]
+        + tables: dict[TableKey, TableData]
+        + series: dict[SeriesKey, SeriesData]
+        + plot_specs: dict[PlotKey, PlotSpec]
+
+        + copy_with(): Self
+    }
+    MouseData o-- VolumeData
+    MouseData o-- VolumeKey
+    MouseData o-- PlaneData
+    MouseData o-- PlaneKey
+    MouseData o-- TableData
+    MouseData o-- TableKey
+    MouseData o-- SeriesData
+    MouseData o-- SeriesKey
+    MouseData o-- PlotSpec
+    MouseData o-- PlotKey
+
+
+    package "Transformations"{
+        interface AbstractTransformation <<planned>>{
+            + apply(batch: MouseData): MouseData
+        }
+        !if ($SHOW_DEPENDENCIES == 1)
+        AbstractTransformation ..> MouseData
+        !endif
+
+
+        class OrientMouse <<planned>> {
+            + target_orientation: Orientation
+
+            - _orient_volume(...): VolumeData
+        }
+        OrientMouse ..|> AbstractTransformation
+        OrientMouse --> Orientation
+        !if ($SHOW_DEPENDENCIES == 1)
+        OrientMouse ..> VolumeData
+        !endif
+
+
+        class OtherTransformations <<planned>> {
+            + hyperparameters: Any
+
+            - _helper_functions(inputs): Any
+        }
+        OtherTransformations ..|> AbstractTransformation
+
+
+        note right of OtherTransformations
+        This includes all of the otehr transformations.
+        Please refer to the transformation diagram for
+        more information
+
+        Examples:
+        - OrientMouse
+        - NormaliseIntensity
+        - AlignToPCA
+        - ExtractSkullSurface
+        - ExtractBLSpace
+        end note
+    }
+
+
+    class PipelineSpec <<planned>> {
+        + pipeline_name: str
+        + steps: list[Type[AbstractTransformation]]
+        + config: PipelineConfig
+
+        + add_step(step: Type[AbstractTransformation]): None
+        + add_list(steps: list[Type[AbstractTransformation]]): None
+        + insert_step(index: int, step: Type[AbstractTransformation]): None
+        + remove_step(index: int): None
+        + clear(): None
+    }
+    PipelineSpec ..> AbstractTransformation : step types
+
+
+    package "Config" {
+        class PipelineConfig <<planned>> {
+            + config: Mapping[str, Any]
+            {static} + RESERVED_KEYS: set[str]
+
+            + mouse: str
+            + pipeline_id: int
+            + pipeline_name: str
+
+            + step_names: list[str]
+
+            + __post_init__(): None
+            + validate(): None
+
+            + has_step(step_name: str): bool
+            + step_params(step_name: str): dict[str, Any]
+            + step_config(step_name: str): StepConfig
+            + step_configs(ordered_step_names: list[str]): list[StepConfig]
+            + to_dict(): dict[str, Any]
+
+            - _require_key(key: str): None
+        }
+        PipelineConfig o-- StepConfig
+
+
+        class StepConfig <<planned>> {
+            + name: str
+            + enabled: bool
+            + parameters: dict
+        }
+    }
+
+
+    package "Execution Metadata"{
+        class StepSignature <<planned>> {
+            + step_name: str
+            + params_hash: str
+            + input_hash: str
+            + code_hash: str
+            + value: str
+        }
+
+        class StepManifest <<planned>> {
+            + pipeline_id: int
+            + step_id: int
+            + step_name: str
+            + signature: str
+            + status: StepStatus
+            + source_pipeline_id: int | None
+            + source_step_id: int | None
+        }
+        StepManifest --> StepStatus
+
+        enum StepStatus <<planned>> {
+            + MATERIALIZED
+            + REDIRECT
+        }
+    }
+}
+
+
+
+'=============================================================================='
+'Adapter Layer'
+'=============================================================================='
+package "Adapter Layer" #E3F2FD {
+    class Source <<planned>> {
+        + mouse: str
+        + base_path: Path
+
+        + folder_path: Path
+        + file_base_name: str
+        + raw_path: Path
+    }
+
+
+    package "Data Loading"{
+        class DataLoader <<planned>>{
+            + source: Source
+
+            - _raw_loader: RawDataLoader
+            - _step_loader: StepDataLoader
+
+            + load_metadata() -> dict
+            + load_raw(): MouseData
+            + load_batch(pipeline_id: int, step_id: int): MouseData
+        }
+        DataLoader --> Source
+        DataLoader --> RawDataLoader
+        DataLoader --> StepDataLoader
+        !if ($SHOW_DEPENDENCIES == 1)
+        DataLoader ..> MouseData
+        !endif
+
+
+        class RawDataLoader <<planned>>{
+            + load_volume(): VolumeData
+        }
+        !if ($SHOW_DEPENDENCIES == 1)
+        RawDataLoader ..> VolumeData
+        !endif
+
+
+        class StepDataLoader <<planned>>{
+            + load_volume(paths: list[Path]): VolumeData
+            + load_plane(paths: list[Path]): PlaneData
+            + load_table(paths: list[Path]): TableData
+            + load_series(paths: list[Path]): SeriesData
+            + load_plots(paths: list[Path]): PlotSpec
+        }
+        !if ($SHOW_DEPENDENCIES == 1)
+        StepDataLoader ..> VolumeData
+        StepDataLoader ..> PlaneData
+        StepDataLoader ..> TableData
+        StepDataLoader ..> SeriesData
+        StepDataLoader ..> PlotSpec
+        !endif
+    }
+
+    class DataDownloader <<planned>>{
+        + source: Source
+
+        + download_batch(mouse: MouseData, pipeline_id: int, step_id: int): Path
+
+        - _download_volume(volume: Volumedata, pipeline_id: int, step_id: int): Path
+        - _download_plane(plane: PlaneData, pipeline_id: int, step_id: int): Path
+        - _download_table(table: TableData, pipeline_id: int, step_id: int): Path
+        - _download_series(series: SeriesData, pipeline_id: int, step_id: int): Path
+        - _download_plot(plot: PlotSpec, pipeline_id: int, step_id: int): Path
+    }
+    DataDownloader --> Source
+    !if ($SHOW_DEPENDENCIES == 1)
+    DataDownloader ..> MouseData
+    DataDownloader ..> VolumeData
+    DataDownloader ..> PlaneData
+    DataDownloader ..> TableData
+    DataDownloader ..> SeriesData
+    DataDownloader ..> PlotSpec
+    !endif
+
+
+    package "Data Converter"{
+        class DataConverter <<planned>> {
+            + source: Source
+
+            - _nii_converter: HDF5_to_Nii
+            - _ply_converter: HDF5_to_Ply
+
+            + convert_batch(pipeline_id: int, step_id: int, out_file_type: str) -> Path
+        }
+        DataConverter --> Source
+        DataConverter --> HDF5_to_Nii
+        DataConverter --> HDF5_to_Ply
+
+        class HDF5_to_Nii <<planned>> {
+            + source: Source
+
+            + convert_mouse(mouse: MouseData, step_path: Path): list[Path]
+            - _convert_volume(volume: VolumeData, step_path: Path): Path
+            - _convert_segmentation(seg: VolumeData, step_path: Path): Path
+        }
+        HDF5_to_Nii --> Source
+        !if ($SHOW_DEPENDENCIES == 1)
+        HDF5_to_Nii ..> MouseData
+        HDF5_to_Nii ..> VolumeData
+        !endif
+
+
+        class HDF5_to_Ply <<planned>> {
+            + source: Source
+
+            + convert_mouse(mouse: MouseData, step_path): list[Path]
+            - _convert_volume(volume: VolumeData, step_path: Path): Path
+            - _convert_segmentation(seg: VolumeData, step_path: Path): Path
+        }
+        HDF5_to_Ply --> Source
+        !if ($SHOW_DEPENDENCIES == 1)
+        HDF5_to_Ply ..> MouseData
+        HDF5_to_Ply ..> Atlas
+        HDF5_to_Ply ..> VolumeData
+        !endif
+    }
+
+
+    package "Repository Layer"{
+        class PipelineConfigRepository <<planned>> {
+            + source: Source
+
+            + load_config(pipeline_id: int): PipelineConfig
+            + update_config(pipeline_id: int, config: PipelineConfig): None
+        }
+        PipelineConfigRepository --> Source
+        !if ($SHOW_DEPENDENCIES == 1)
+        PipelineConfigRepository ..> PipelineConfig
+        !endif
+
+
+        class StepManifestRepository <<planned>> {
+            + source: Source
+
+            + load_manifest(pipeline_id: int, step_id: int): StepManifest
+            + save_manifest(manifest: StepManifest): None
+            + find_by_signature(signature: str): StepManifest | None
+            + resolve_redirect(pipeline_id: int, step_id: int): StepManifest
+        }
+        StepManifestRepository --> Source
+        !if ($SHOW_DEPENDENCIES == 1)
+        StepManifestRepository ..> StepStatus
+        !endif
+
+
+        class Repository <<planned>> {
+            + source: Source
+
+            - _pipeline_base_name: str
+            - _config_path: Path
+
+            + init_project(): None
+            + init_new_pipleine(pipeline_id: int): None
+        }
+        Repository --> Source
+    }
+
+
+    class DataIO <<planned>> {
+        + source: Source
+
+        - _loader: DataLoader
+        - _downloader: DataDownloader
+        - _converter: DataConverter
+        - _pipeline_repo: PipelineConfigRepository
+        - _step_manifest_repo: StepManifestRepository
+
+        + load_raw(): MouseData
+        + load_batch(pipeline_id: int, step_id: int): MouseData
+        + download_batch(batch: MouseData, pipeline_id: int, step_id: int): Path
+        + load_config(pipeline_id: int): PipelineConfig
+        + find_reusable_step(signature: StepSignature): StepManifest | None
+        + save_step_manifest(pipeline_id: int, step_id: int, step_name: str, signature: str, status: str): None
+        + save_redirect(pipeline_id: int, step_id: int, source_pipeline_id: int, source_step_id: int, signature: str): None
+        + convert_batch(pipeline_id: int, step_id: int, out_file_type: str) -> Path
+    }
+    DataIO --> Source
+    DataIO --> DataLoader
+    DataIO --> DataDownloader
+    DataIO --> PipelineConfigRepository
+    !if ($SHOW_DEPENDENCIES == 1)
+    DataIO ..> PipelineConfig
+    DataIO ..> MouseData
+    !endif
+}
+
+
+
+'=============================================================================='
+'Broken Links'
+'=============================================================================='
+PipelineSpec *-- PipelineConfig
+PipelineRunner --> DataIO
+ClearTissueProject --> DataIO
+@enduml
+
+
+
+'!if ($SHOW_DEPENDENCIES == 1)'
