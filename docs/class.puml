@@ -85,7 +85,7 @@ package "Service Layer" #E8F5E9 {
 'Model Domain'
 '=============================================================================='
 package "Model Domain Layer" #FFF8E1 {
-    enum Orientation <<planned>> {
+    enum Orientation <<implemented>> {
         + PSL
         + ASL
         + PIM
@@ -101,10 +101,10 @@ package "Model Domain Layer" #FFF8E1 {
     }
 
     package "Volumetric Containers"{
-        enum VolumeKey <<planned>> {
+        enum VolumeKey <<implemented>> {
             + DEFAULT
             + MRI
-            + uCT
+            + CT
             + SEGMENTATION
         }
 
