@@ -85,7 +85,7 @@ package "Service Layer" #E8F5E9 {
 'Model Domain'
 '=============================================================================='
 package "Model Domain Layer" #FFF8E1 {
-    enum Orientation <<planned>> {
+    enum Orientation <<implemented>> {
         + PSL
         + ASL
         + PIM
@@ -101,23 +101,23 @@ package "Model Domain Layer" #FFF8E1 {
     }
 
     package "Volumetric Containers"{
-        enum VolumeKey <<planned>> {
+        enum VolumeKey <<implemented>> {
             + DEFAULT
             + MRI
-            + uCT
+            + CT
             + SEGMENTATION
         }
 
 
-        abstract class VolumeData <<planned>> {
+        abstract class VolumeData <<implemented>> {
             + data: NDArray
             + key: VolumeKey
             + resolution: tuple[float, float, float]
             + unit: tuple[str, str, str]
             + orientation: Orientation
-            + shape: tuple[int, int, int]
+            + contains_labels: bool = False
 
-            - _contains_labels: bool = False
+            + shape: tuple[int, int, int]
 
             + copy_with(): Self
         }
@@ -125,22 +125,23 @@ package "Model Domain Layer" #FFF8E1 {
         VolumeData --> Orientation
 
 
-        class MRI <<planned>> {
+        class MRI <<implemented>> {
             + copy_with(): Self
         }
         MRI --|> VolumeData
 
 
-        class uCT <<planned>> {
+        class uCT <<implemented>> {
             + copy_with(): Self
         }
         uCT --|> VolumeData
 
 
-        class Segmentation <<planned>> {
+        class Segmentation <<implemented>> {
             + look_up: pd.DataFrame
-            + segment_labels: list[int]
             + background_segment: int
+
+            + segment_labels: NDArray[int]
 
             + copy_with(): Self
         }
