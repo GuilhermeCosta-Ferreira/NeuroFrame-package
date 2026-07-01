@@ -1,7 +1,8 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from enum import StrEnum
+from enum import Enum
+
 from itertools import product, permutations
 
 
@@ -9,6 +10,10 @@ from itertools import product, permutations
 # ================================================================
 # 1. Section: Constants and Helpers
 # ================================================================
+class StrEnum(str, Enum):
+    def __str__(self) -> str:
+        return self.value
+
 _ORIENTATION_GROUPS = (
     ("p", "a"),
     ("i", "s"),
