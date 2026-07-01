@@ -26,6 +26,7 @@ def volume_data(volume_array: np.ndarray) -> VolumeData:
         resolution=(25.0, 25.0, 50.0),
         unit=("um", "um", "um"),
         orientation=Orientation("ras"),
+        contains_labels=False
     )
 
 
@@ -76,4 +77,5 @@ def test_volume_data_rejects_non_3d_arrays(shape: tuple[int, ...]) -> None:
             resolution=(25.0, 25.0, 50.0),
             unit=("um", "um", "um"),
             orientation=Orientation("ras"),
+            contains_labels=False
         )
