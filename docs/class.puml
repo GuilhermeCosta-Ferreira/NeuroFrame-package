@@ -109,15 +109,15 @@ package "Model Domain Layer" #FFF8E1 {
         }
 
 
-        abstract class VolumeData <<planned>> {
+        abstract class VolumeData <<implemented>> {
             + data: NDArray
             + key: VolumeKey
             + resolution: tuple[float, float, float]
             + unit: tuple[str, str, str]
             + orientation: Orientation
-            + shape: tuple[int, int, int]
+            + contains_labels: bool = False
 
-            - _contains_labels: bool = False
+            + shape: tuple[int, int, int]
 
             + copy_with(): Self
         }
