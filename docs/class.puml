@@ -125,22 +125,23 @@ package "Model Domain Layer" #FFF8E1 {
         VolumeData --> Orientation
 
 
-        class MRI <<planned>> {
+        class MRI <<implemented>> {
             + copy_with(): Self
         }
         MRI --|> VolumeData
 
 
-        class uCT <<planned>> {
+        class uCT <<implemented>> {
             + copy_with(): Self
         }
         uCT --|> VolumeData
 
 
-        class Segmentation <<planned>> {
+        class Segmentation <<implemented>> {
             + look_up: pd.DataFrame
-            + segment_labels: list[int]
             + background_segment: int
+
+            + segment_labels: NDArray[int]
 
             + copy_with(): Self
         }
