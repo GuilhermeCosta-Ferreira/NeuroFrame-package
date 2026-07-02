@@ -93,7 +93,7 @@ package "Model Domain Layer" #FFF8E1 {
     }
 
 
-    enum Orientation2D <<planned>> {
+    enum Orientation2D <<implemented>> {
         + PS
         + AS
         + PI
