@@ -150,7 +150,7 @@ package "Model Domain Layer" #FFF8E1 {
 
 
     package "Planar Containers"{
-        enum PlaneKey <<planned>> {
+        enum PlaneKey <<implemented>> {
             + DEFAULT
             + SKULL_PROJECTION
         }
