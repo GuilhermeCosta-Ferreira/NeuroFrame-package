@@ -156,7 +156,7 @@ package "Model Domain Layer" #FFF8E1 {
         }
 
 
-        abstract class PlaneData <<planned>> {
+        abstract class PlaneData <<implemented>> {
             + data: NDArray
             + key: PlaneKey
             + resolution: tuple[float, float]
