@@ -1,12 +1,11 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-import numpy as np
-import polars as pl
 import pytest
 
+import numpy as np
+
 from numpy.typing import NDArray
-from polars.testing import assert_frame_equal
 
 from neuroframe.domain.orientation_2d import Orientation2D
 from neuroframe.domain.planar_data.skull_projection import SkullProjection
