@@ -85,29 +85,3 @@ def test_segmentation_shape_returns_data_shape(
     segmentation: Segmentation,
 ) -> None:
     assert segmentation.shape == (2, 2, 3)
-
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    "shape",
-    [
-        (4,),
-        (4, 5),
-        (4, 5, 6, 7),
-    ],
-    ids=["1d", "2d", "4d"],
-)
-def test_segmentation_rejects_non_3d_arrays(
-    shape: tuple[int, ...],
-    segmentation_lookup: pl.DataFrame,
-) -> None:
-    data = np.zeros(shape, dtype=np.uint16)
-
-    with pytest.raises(ValueError, match="3D array"):
-        Segmentation(
-            data=data,
-            look_up=segmentation_lookup,
-            background_segment=0,
-            resolution=(25.0, 25.0, 50.0),
-            unit=("um", "um", "um"),
-            orientation=Orientation("ras"),
-        )

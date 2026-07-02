@@ -93,7 +93,7 @@ package "Model Domain Layer" #FFF8E1 {
     }
 
 
-    enum Orientation2D <<planned>> {
+    enum Orientation2D <<implemented>> {
         + PS
         + AS
         + PI
@@ -150,13 +150,13 @@ package "Model Domain Layer" #FFF8E1 {
 
 
     package "Planar Containers"{
-        enum PlaneKey <<planned>> {
+        enum PlaneKey <<implemented>> {
             + DEFAULT
             + SKULL_PROJECTION
         }
 
 
-        abstract class PlaneData <<planned>> {
+        abstract class PlaneData <<implemented>> {
             + data: NDArray
             + key: PlaneKey
             + resolution: tuple[float, float]
@@ -172,7 +172,7 @@ package "Model Domain Layer" #FFF8E1 {
         PlaneData --> Orientation2D
 
 
-        class SkullProjection <<planned>> {
+        class SkullProjection <<implemented>> {
             + method_name: str
         }
         SkullProjection --|> PlaneData
