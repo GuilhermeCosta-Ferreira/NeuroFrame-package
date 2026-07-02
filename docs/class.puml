@@ -172,7 +172,7 @@ package "Model Domain Layer" #FFF8E1 {
         PlaneData --> Orientation2D
 
 
-        class SkullProjection <<planned>> {
+        class SkullProjection <<implemented>> {
             + method_name: str
         }
         SkullProjection --|> PlaneData
