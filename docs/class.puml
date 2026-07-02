@@ -185,7 +185,7 @@ package "Model Domain Layer" #FFF8E1 {
         }
 
 
-        abstract class TableData <<planned>> {
+        abstract class TableData <<implemented>> {
             + data: pl.DataFrame
             + key: TableKey
             + description: str | None
@@ -199,7 +199,7 @@ package "Model Domain Layer" #FFF8E1 {
             + DEFAULT
         }
 
-        abstract class SeriesData <<planned>> {
+        abstract class SeriesData <<implemented>> {
             + x: NDArray
             + y: NDArray
             + key: SeriesKey
@@ -218,7 +218,7 @@ package "Model Domain Layer" #FFF8E1 {
         }
 
 
-        abstract class PlotSpec <<planned>> {
+        abstract class PlotSpec <<implemented>> {
             + key: PlotKey
             + title: str
             + x_label: str | None
