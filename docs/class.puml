@@ -180,12 +180,12 @@ package "Model Domain Layer" #FFF8E1 {
 
 
     package "Data Containers"{
-        enum TableKey <<planned>> {
+        enum TableKey <<implemented>> {
             + DEFAULT
         }
 
 
-        abstract class TableData <<planned>> {
+        abstract class TableData <<implemented>> {
             + data: pl.DataFrame
             + key: TableKey
             + description: str | None
@@ -195,11 +195,11 @@ package "Model Domain Layer" #FFF8E1 {
         TableData --> TableKey
 
 
-        enum SeriesKey <<planned>> {
+        enum SeriesKey <<implemented>> {
             + DEFAULT
         }
 
-        abstract class SeriesData <<planned>> {
+        abstract class SeriesData <<implemented>> {
             + x: NDArray
             + y: NDArray
             + key: SeriesKey
@@ -213,12 +213,12 @@ package "Model Domain Layer" #FFF8E1 {
         SeriesData --> SeriesKey
 
 
-        enum PlotKey <<planned>> {
+        enum PlotKey <<implemented>> {
             + DEFAULT
         }
 
 
-        abstract class PlotSpec <<planned>> {
+        abstract class PlotSpec <<implemented>> {
             + key: PlotKey
             + title: str
             + x_label: str | None
