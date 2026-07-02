@@ -231,7 +231,7 @@ package "Model Domain Layer" #FFF8E1 {
     }
 
 
-    class MouseData <<planned>> {
+    class MouseData <<partial>> {
         + volumes: dict[VolumeKey, VolumeData]
         + planes: dict[PlaneKey, PlaneData]
         + tables: dict[TableKey, TableData]
@@ -253,7 +253,7 @@ package "Model Domain Layer" #FFF8E1 {
 
 
     package "Transformations"{
-        interface AbstractTransformation <<planned>>{
+        interface AbstractTransformation <<implemented>>{
             + apply(batch: MouseData): MouseData
         }
         !if ($SHOW_DEPENDENCIES == 1)
