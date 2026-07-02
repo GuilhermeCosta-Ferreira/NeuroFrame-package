@@ -8,5 +8,5 @@ from enum import Enum
 # ================================================================
 # 1. Section: Functions
 # ================================================================
-class Plotkey(Enum):
+class PlotKey(Enum):
     DEFAULT = "default"
