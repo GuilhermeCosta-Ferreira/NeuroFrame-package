@@ -180,7 +180,7 @@ package "Model Domain Layer" #FFF8E1 {
 
 
     package "Data Containers"{
-        enum TableKey <<planned>> {
+        enum TableKey <<implemented>> {
             + DEFAULT
         }
 
@@ -195,7 +195,7 @@ package "Model Domain Layer" #FFF8E1 {
         TableData --> TableKey
 
 
-        enum SeriesKey <<planned>> {
+        enum SeriesKey <<implemented>> {
             + DEFAULT
         }
 
@@ -213,7 +213,7 @@ package "Model Domain Layer" #FFF8E1 {
         SeriesData --> SeriesKey
 
 
-        enum PlotKey <<planned>> {
+        enum PlotKey <<implemented>> {
             + DEFAULT
         }
 
